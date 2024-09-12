@@ -1,0 +1,45 @@
+﻿.f-orb{
+    font-family:'Orbitron'
+}
+
+.f-orbb{
+    font-family:'Orbitron';
+    font-weight:800
+}
+
+body{
+    font-size: 3vh;
+}
+/*leaderboard*/
+.lb-name {
+    font-size: 2rem;
+}
+
+.lb-rating {
+    font-size : 1rem;
+
+}
+
+.lb-rankl {
+    position: relative;
+    font-size: 2.5rem;
+    top: -0.4rem;
+}
+
+.container-states {
+    display: flex;
+    float: right;
+    height: 3rem;
+    flex-direction: column;
+    margin-right: 1rem;
+    justify-content:space-around;
+}
+
+.img-state {
+    height: 2rem;
+}
+
+.statedesc {
+    font-size: 0.85rem;
+    font-weight: 600;
+}

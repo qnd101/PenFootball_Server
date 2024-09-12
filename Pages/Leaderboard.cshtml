@@ -1,0 +1,68 @@
+﻿@page "/documents/leaderboard"
+@model PenFootball_Server.Pages.LeaderboardModel
+@{
+    ViewData["Title"] = "Player Rankings";
+}
+
+<div class="container" style="width: 70%; transform:translateX(10vw)">
+<h1 class="f-orbb">Leaderboard</h1>
+
+@if (Model.TopPlayer != null)
+{
+    <div class="row">
+        <div class="col s11">
+            <div class="card-panel blue-grey lighten-5 playercard">
+                    <span class="lb-name f-orbb amber-text text-darken-3" style="padding-right:1em">🏆Champion</span>
+                    <span class="lb-name f-orbb black-text">@Model.TopPlayer.Name</span> <span class="lb-rating f-orb">(@Model.TopPlayer.Rating)</span>
+                    <span class="lb-rankl f-orbb red-text text-accent-2 text-darken-5" style="float:right">@Model.TopPlayerRank</span>
+                    <span class="dbid" style="display:none">@Model.TopPlayer.ID</span>
+                    <div class="container-states">
+                        <img src="" class="img-state" />
+                        <span src="" class="statedesc f-orb" style="float:right"></span>
+                    </div>
+            </div>
+        </div>
+    </div>
+}
+<hr />
+@if (Model.LowerPlayers != null && Model.LowerPlayers.Any())
+{
+    <ul>
+        @foreach ((var player, int rank, string letter) in Model.LowerPlayers)
+        {
+                bool isme = Model.SearchedPlayer != null && player.Name == Model.SearchedPlayer.Name;
+                <li>
+                    <div class="row">
+                    <div class="col s11 @(isme?"offset-s1":"")">
+                            <div class="@(isme?"card-panel green lighten-3":"card-panel amber lighten-3") playercard"> 
+                                <span class="lb-name f-orbb blue-text text-darken-3" style="padding-right:1em">#@rank</span>
+                                <span class="lb-name f-orbb grey-text text-darken-3">@player.Name</span> 
+                                <span class="lb-rating f-orb">(@player.Rating)</span>
+                                <span class="lb-rankl f-orbb red-text text-accent-2 text-darken-5" style="float:right">@letter</span>
+                                <span class="dbid" style="display:none">@player.ID</span>
+                                <div class="container-states">
+                                    <img src="" class="img-state" />
+                                    <span src="" class="statedesc f-orb" style="float:right"></span>
+                                </div>
+                        </div>
+                    </div>
+                </div>
+            </li>
+        }
+    </ul>
+}
+</div>
+
+<div style="position:fixed; left:5vw; width:20vw; top: 20vh; background-color:rgba(0,0,0,0.4);" class="card-panel f-orb">
+<form method="get" style="display:flex; flex-direction:column; align-items:center;">
+<h4 class="f-orbb">Search</h4>
+    <input type="text" name="Name" value="@Model.Name" class="f-orb" placeholder="Enter player name" />
+    <button type="submit" class="f-orb waves-effect waves-light btn">Search!</button>
+</form>
+</div>
+
+<!--클라이언트 측 스크립트. 게임서버에 접속해서 1초마다 플레이어가 하고 있는 게임 데이터를 가져옴. -->
+<script type="text/javascript">
+    var serverendpoint = "@Model.StateEndPoint"; 
+</script>
+<script type="text/javascript" src="~/static/js/leaderboard.js"></script>
