@@ -1,10 +1,12 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
 using Microsoft.Extensions.Options;
 using PenFootball_Server.DB;
 using PenFootball_Server.Models;
+using PenFootball_Server.Services;
 using PenFootball_Server.Settings;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
@@ -15,21 +17,30 @@ namespace PenFootball_Server.Controllers
 
     [Route("api/[controller]")]
     [ApiController]
-    public class GameResultController : ControllerBase
+    public class ServersController : ControllerBase
     {
-        ILogger<GameResultController> _logger;
+        ILogger<ServersController> _logger;
         UserDataContext _userDataContext;
         IOptions<RatingSettings> _ratingSettings;
+        IOptions<ServerSettings> _serverSettings;
+        TokenKeySettings _tokenKeySettings;
+        private readonly PasswordHasher<object> _passwordHasher = new PasswordHasher<object>();
 
-        public GameResultController(ILogger<GameResultController> logger, UserDataContext userDataContext, IOptions<RatingSettings> ratingsettings) 
+        public ServersController(ILogger<ServersController> logger
+            , UserDataContext userDataContext
+            , IOptions<RatingSettings> ratingsettings
+            , IOptions<ServerSettings> serversettings
+            , TokenKeySettings tokenKeySettings) 
         { 
             _logger = logger;
             _userDataContext = userDataContext;
             _ratingSettings = ratingsettings;
+            _serverSettings = serversettings;
+            _tokenKeySettings = tokenKeySettings;
         }
         // POST api/<GameResultController>
 
-        [HttpPost]
+        [HttpPost("gameresult")]
         [ProducesResponseType(200)]
         [ProducesResponseType(400)]
         [Authorize]
@@ -66,5 +77,26 @@ namespace PenFootball_Server.Controllers
                 return BadRequest("Only Servers can Post Game Results!");
             }    
         }
+
+
+        //게임 서버가 켜질때 JWT 토큰을 제공함 & 서버의 입장 Policy를 제공
+        //서버 전용 API
+        [HttpPost("initialize")]
+        public async Task<IActionResult> ServerInitData([FromBody] LoginModel loginModel)
+        {
+            if (_userDataContext.Users.FirstOrDefault(model => (model.Name == loginModel.Username)) is UserModel user && user.Role == Roles.Server)
+            {
+                var result = _passwordHasher.VerifyHashedPassword(null, user.Password, loginModel.Password);
+                if (result != PasswordVerificationResult.Success)
+                    return BadRequest("Wrong Password");
+
+                if (!_serverSettings.Value.ServerAccounts.TryGetValue(user.Name, out ServerSetting setting))
+                    return BadRequest("Unrecognized Server Name");
+
+                return Ok(new { Secret = _tokenKeySettings.Secret, EntrancePolicy = setting.EntrancePolicy});
+            }
+            return BadRequest("Server Auth Failed");
+        }
+
     }
 }

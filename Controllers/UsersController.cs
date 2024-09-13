@@ -17,10 +17,11 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using System.Net.Mail;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System.Net;
+using System.Buffers.Text;
+using System.Web;
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace PenFootball_Server.Controllers
@@ -42,6 +43,7 @@ namespace PenFootball_Server.Controllers
         public int rating { get; set; }
         public string rankletter { get; set; }
         public string joindate { get; set; }
+        public string email { get; set; }
     }
 
     public class SignupModel
@@ -65,6 +67,7 @@ namespace PenFootball_Server.Controllers
         UserDataContext _userDataContext;
         IOptions<RatingSettings> _ratingSettings;
         TokenKeySettings _tokenKeySettings;
+        IOptions<EmailSettings> _emailSettings;
 
         private readonly PasswordHasher<object> _passwordHasher = new PasswordHasher<object>();
         private const int ExpiryDurationInMinutes = 60;
@@ -75,82 +78,56 @@ namespace PenFootball_Server.Controllers
         @"^[^@\s]+@[^@\s]+\.[^@\s]+$", RegexOptions.Compiled);
 
         private static string emailBodyFormat = """
-                        <!DOCTYPE html>
+            <!DOCTYPE html>
             <html lang="en">
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <title>Confirm Your Email</title>
-                <style>
-                    body {
-                        margin: 0;
-                        padding: 0;
-                        font-family: Arial, sans-serif;
-                        background-color: color(255,255,255);
-                        color: #333333;
-                    }
-                    .email-container {
-                        width: 100%;
-                        max-width: 600px;
-                        margin: 20px auto;
-                        background-color: #ffffff;
-                        border-radius: 8px;
-                        overflow: hidden;
-                        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-                    }
-                    .header {
-                        background-color:#fae18f;
-                        padding: 20px;
-                        color: #424242;
-                        text-align: center;
-                    }
-                    .header h1 {
-                        margin: 0;
-                    }
-                    .content {
-                        padding: 20px;
-                        text-align: center;
-                    }
-                    .button {
-                        display: inline-block;
-                        padding: 12px 20px;
-                        font-size: 20px;
-                        color: #ffffff;
-                        background-color: #ef9436;
-                        text-decoration: none;
-                        border-radius: 5px;
-                        margin-top: 20px;
-                    }
-                    .footer {
-                        background-color: #f4f4f4;
-                        padding: 10px;
-                        text-align: center;
-                        font-size: 12px;
-                        color: #666666;
-                    }
-                </style>
             </head>
-            <body>
-                <div class="email-container">
-                    <div class="header">
-                        <h1>Confirm Email</h1>
+            <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: rgb(255,255,255); color: #333333;">
+                <div class="email-container" style="width: 100%; max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);">
+                    <div class="header" style="background-color:#fae18f; padding: 20px; color: #424242; text-align: center;">
+                        <h1 style="margin: 0;">Confirm Email</h1>
                     </div>
-                    <div class="content">
+                    <div class="content" style="padding: 20px; text-align: center;">
                         <p>Hi There {0},</p>
                         <p>Thanks for playing penfootball.online. To confirm your email, press the button below. If you did not request this, please ignore this email.</p>
-                        <a href="{1}" class="button">Confirm</a>
+                        <a href="{1}" class="button" style="display: inline-block; padding: 12px 20px; font-size: 20px; color: #ffffff; background-color: #ef9436; text-decoration: none; border-radius: 5px; margin-top: 20px;">Confirm</a>
+                    </div>
+                    <div class="footer" style="background-color: #f4f4f4; padding: 10px; text-align: center; font-size: 12px; color: #666666;">
+                        <p>© 2024 Pen Football Online</p>
                     </div>
                 </div>
             </body>
             </html>
             """;
 
-        public UsersController(ILogger<UsersController> logger, UserDataContext userDataContext, IOptions<RatingSettings> ratingSettings, TokenKeySettings tokenkeysettings)
+        private static string emailConfirmedFormat = """
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Email Confirmed</title>
+            </head>
+            <body>
+            <h1>Your Email is Confirmed</h1>
+            <a>{0} is added to {1}'s account</a>
+            </body>
+            """;
+
+        public UsersController(ILogger<UsersController> logger
+            , UserDataContext userDataContext
+            , IOptions<RatingSettings> ratingSettings
+            , IOptions<EmailSettings> emailSettings
+            , TokenKeySettings tokenkeysettings)
         {
             _logger = logger;
             _userDataContext = userDataContext;
             _ratingSettings = ratingSettings;
             _tokenKeySettings = tokenkeysettings;
+            _emailSettings = emailSettings;
         }
 
         [HttpPost("signup")]
@@ -177,7 +154,7 @@ namespace PenFootball_Server.Controllers
             var currentdate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day);
             var hashedpassword = _passwordHasher.HashPassword(null, signupModel.Password);
             var newuser = new UserModel() { Name = signupModel.Username, Password = hashedpassword, 
-                JoinDate = currentdate, Role = Roles.Player, Rating = _ratingSettings.Value.StartRating};
+                JoinDate = currentdate, Role = Roles.Player, Rating = _ratingSettings.Value.StartRating, Email=""};
             _userDataContext.Users.Add(newuser);
             _userDataContext.SaveChanges();
             _logger.LogInformation($"Successfully Added User {signupModel.Username} to Database");
@@ -222,7 +199,8 @@ namespace PenFootball_Server.Controllers
             {
                 new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim(ClaimTypes.Role, Enum.GetName(user.Role.GetType(), user.Role) ?? "")
+                new Claim(ClaimTypes.Role, Enum.GetName(user.Role.GetType(), user.Role) ?? ""),
+                new Claim("email", user.Email.ToString())
             };
 
             var token = new JwtSecurityToken(
@@ -253,7 +231,8 @@ namespace PenFootball_Server.Controllers
                         name = userModel.Name,
                         rating = userModel.Rating,
                         rankletter = findRankLetter(userModel.Rating),
-                        joindate = userModel.JoinDate.ToShortDateString()
+                        joindate = userModel.JoinDate.ToShortDateString(),
+                        email = userModel.Email
                     };
                     return Ok(userdatamodel);
                 }
@@ -288,23 +267,7 @@ namespace PenFootball_Server.Controllers
             return BadRequest("No player with ID");
         }
 
-        //게임 서버가 켜질때 JWT 토큰을 제공함
-        //서버 전용 API
-        [HttpPost("server/findsecret")]
-        public async Task<IActionResult> FindJWTSecret([FromBody] LoginModel loginModel)
-        {
-            if (_userDataContext.Users.FirstOrDefault(model => (model.Name == loginModel.Username)) is UserModel user && user.Role == Roles.Server)
-            {
-
-                var result = _passwordHasher.VerifyHashedPassword(null, user.Password, loginModel.Password);
-                if (result == PasswordVerificationResult.Success)
-                    return Ok(_tokenKeySettings.Secret);
-                else
-                    return BadRequest("Wrong Password");
-            }
-            return BadRequest("Server Auth Failed");
-        }
-
+        public record TokenPayload(DateTime expiration, int id, string email);
 
         [HttpPost("emailauth")]
         [Authorize]
@@ -314,8 +277,20 @@ namespace PenFootball_Server.Controllers
         {
             _logger.LogInformation("Request for Email Authentication...");
 
+            if(!ModelState.IsValid)
+            {
+                _logger.LogInformation($"Model State is not Valid");
+                return BadRequest(ModelState);
+            }
+
+            if (string.IsNullOrEmpty(_emailSettings.Value.EndPoint))
+                return NotFound("Email endpoint not found in server");
+
             if (string.IsNullOrEmpty(emailaddr) || !emailRegex.IsMatch(emailaddr))
                 return BadRequest("Give a valid Email address");
+
+            if (_userDataContext.Users.Any(var => var.Email == emailaddr))
+                return BadRequest("You already registered this email or it is already used by one of our users");
 
             //이메일로 보낼 string 제작: stateless하게 처리하고 싶으므로 (ID + 발행시각 + 이메일 주소)에다 EmailSecret으로 Sign
             //해당 string을 퀴리에 집어넣은 링크를 이메일로 전송 -> 적절한 페이지로 redirection
@@ -324,12 +299,8 @@ namespace PenFootball_Server.Controllers
             if (!Int32.TryParse(userIdstring, out int userId))
                 return BadRequest("Invalid Token");
 
-            var payload = new
-            {
-                datetime = DateTime.UtcNow,
-                id = userId,
-                emailaddr
-            };
+            //10분의 제한시간
+            var payload = new TokenPayload(DateTime.UtcNow + TimeSpan.FromMinutes(10), userId, emailaddr);
 
             string payloadJson = JsonSerializer.Serialize(payload);
             var secretKeyBytes = Encoding.UTF8.GetBytes(_tokenKeySettings.EmailSecret);
@@ -342,7 +313,7 @@ namespace PenFootball_Server.Controllers
             string encodedPayload = Convert.ToBase64String(payloadBytes);
             string encodedSignature = Convert.ToBase64String(signatureBytes);
 
-            var authstring = $"{encodedPayload}.{encodedSignature}";
+            var authstring = HttpUtility.UrlEncode($"{encodedPayload}.{encodedSignature}");
             var authlink = $"https://penfootball.online/api/users/confirmemail?token={authstring}";
 
             if (!(_userDataContext.Users.Find(userId) is UserModel user))
@@ -350,37 +321,121 @@ namespace PenFootball_Server.Controllers
 
             var emailbody = string.Format(emailBodyFormat, user.Name, authlink);
 
+            using HttpClient client = new HttpClient();
             try
             {
-                // Configure the SMTP client
-                SmtpClient smtpClient = new SmtpClient("smtp.yourserver.com") // Use your SMTP server here
-                {
-                    Port = 587, // Change to your port (usually 587 for TLS)
-                    Credentials = new NetworkCredential("yourEmail@domain.com", "yourEmailPassword"), // Use your credentials
-                    EnableSsl = true, // Enable SSL for secure email sending
-                };
-
                 // Create the email message
-                MailMessage mailMessage = new MailMessage
+                var mailMessage = new
                 {
-                    From = new MailAddress("yourEmail@domain.com"), // Sender email address
-                    Subject = "Confirm Your Email",
-                    Body = emailbody,
-                    IsBodyHtml = true // Set to true if the body is HTML
+                    api_key = _emailSettings.Value.Key,
+                    sender = "\"Pen Football Online\" <confirm@penfootball.online>", // Sender email address
+                    to = new string[] { emailaddr },
+                    subject = "Confirm Your Email",
+                    html_body = emailbody
                 };
-
-                // Add recipient
-                mailMessage.To.Add(emailaddr);
-
+                var content = new StringContent(JsonSerializer.Serialize(mailMessage), Encoding.UTF8, "application/json");
+                var response = await client.PostAsync(_emailSettings.Value.EndPoint, content);
                 // Send the email
-                smtpClient.Send(mailMessage);
+                if (response.StatusCode != HttpStatusCode.OK)
+                {
+                    _logger.LogInformation($"Email sending faliled. Content: {await response.Content.ReadAsStringAsync()}");
+                    return BadRequest("Failed to send Email");
+                }
                 _logger.LogInformation($"Authentication email to {user.Name}({userId}) sent successfully.");
+
+                return Ok();
             }
             catch (Exception ex)
             {
                 _logger.LogInformation($"Error sending email: {ex.Message}");
+                return BadRequest("Failed to send Email");
             }
-            return Ok();
+        }
+
+        [HttpGet("confirmemail")]
+        public async Task<IActionResult> ConfirmMail(string token)
+        {
+            _logger.LogInformation($"Confirming Token {token}");
+
+            if (string.IsNullOrEmpty(_emailSettings.Value.EndPoint))
+                return NotFound("Email endpoint not found in server");
+
+            if (!ModelState.IsValid)
+            {
+                _logger.LogInformation("Model Validation Failed");
+                return BadRequest("Invalid Token");
+            }
+
+            var splittoken = token.Split('.');
+            string encodedpayload = splittoken[0], signature = splittoken[1];
+
+            if (!isbase64(encodedpayload) || !isbase64(signature))
+            {
+                _logger.LogInformation("Non Base64 char contained");
+                return BadRequest("Invalid Token");
+            }
+
+            //Signing validation
+            var sigbytes = Convert.FromBase64String(signature);
+            var payloadbytes = Convert.FromBase64String(encodedpayload);
+            var secretKeyBytes = Encoding.UTF8.GetBytes(_tokenKeySettings.EmailSecret);
+
+            bool isvalid;
+            using (var hmac = new HMACSHA256(secretKeyBytes))
+                isvalid = hmac.ComputeHash(payloadbytes).SequenceEqual(sigbytes);
+
+            if(!isvalid)
+            {
+                _logger.LogInformation("Signature validation failed");
+                return BadRequest("Invalid Token");
+            }    
+
+            //Check payload
+            var payloadnullable = JsonSerializer.Deserialize<TokenPayload>(Encoding.UTF8.GetString(payloadbytes));
+            if (!(payloadnullable is TokenPayload payload))
+            {
+                _logger.LogInformation("Wrong format for token payload");
+                return BadRequest("Invalid Token");
+            }
+
+            if(payload.expiration < DateTime.UtcNow)
+            {
+                _logger.LogInformation("Token expired");
+                return BadRequest("Token expired");
+            }
+
+
+            if (!(_userDataContext.Users.Find(payload.id) is UserModel userModel))
+            {
+                _logger.LogInformation("User in token not found");
+                return BadRequest("User not found");
+            }
+
+            userModel.Email = payload.email;
+
+            _userDataContext.SaveChanges();
+
+            _logger.LogInformation($"Successfully added email address {payload.email} to user {userModel.Name}({userModel.ID})");
+
+            return new ContentResult
+            {
+                Content = string.Format(emailConfirmedFormat, userModel.Email, userModel.Name),
+                ContentType = "text/html",
+                StatusCode = 200
+            };
+        }
+
+        private bool isbase64(string str)
+        {
+            // Check if the string contains only Base64 valid characters
+            foreach (char c in str)
+            {
+                if (!(char.IsLetterOrDigit(c) || c == '+' || c == '/' || c == '='))
+                {
+                    return false;
+                }
+            }
+            return true;
         }
 
         /*

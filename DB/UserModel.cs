@@ -21,5 +21,6 @@ namespace PenFootball_Server.Models
         [DataType(DataType.Date)]
         public DateTime JoinDate { get; set; }
         public int Rating { get; set; } 
+        public string Email { get; set; }
     }
 }

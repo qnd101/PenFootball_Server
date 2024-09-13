@@ -5,6 +5,7 @@
     {
         public string Password { get; set; }
         public string ApiEndpoint { get; set; }
+        public List<Dictionary<string, string>> EntrancePolicy { get; set; }
     }
     public class ServerSettings
     {

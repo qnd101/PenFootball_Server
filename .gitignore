@@ -6,6 +6,7 @@
 #
 appsettings.Production.json
 penfootball.db.*
+temp/
 
 # User-specific files
 *.rsuser

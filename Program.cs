@@ -20,7 +20,7 @@ builder.Services.AddDbContext<UserDataContext>(options =>
 builder.Services.AddControllers();
 builder.Services.Configure<RatingSettings>(builder.Configuration.GetSection("RatingSettings"));
 builder.Services.Configure<ServerSettings>(builder.Configuration.GetSection("GameServers"));
-
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 
 var tokenkeysettings = new TokenKeySettings(); //서버 시작 시 무작위적으로 키 생성
 builder.Services.AddSingleton(tokenkeysettings);
