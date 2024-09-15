@@ -411,6 +411,12 @@ namespace PenFootball_Server.Controllers
                 return BadRequest("User not found");
             }
 
+            if(!string.IsNullOrEmpty(userModel.Email))
+            {
+                _logger.LogInformation("User already has email");
+                return BadRequest("You already registered an email");
+            }
+
             userModel.Email = payload.email;
 
             _userDataContext.SaveChanges();

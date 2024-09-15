@@ -44,23 +44,25 @@ namespace PenFootball_Server.Pages
         }
         public async Task OnGetAsync()
         {
-            StateEndPoint = _serverSettings.Value.ServerAccounts["SSHSPhys"].ApiEndpoint + "/gamedata/players/state";
+            var settings = _serverSettings.Value.ServerAccounts["SSHSPhys"];
+            StateEndPoint = settings.ApiEndpoint + "/gamedata/players/state";
+
             var orderedPlayersnRank = _context.Users
                 .Where(usr => usr.Role == Roles.Player)
                 .OrderByDescending(usr => usr.Rating)
                 .ToList()
+                .Where(usr => settings.Validate(usr))
                 .Select((usr, i) => (usr, i + 1));
             
             var topPlayers= orderedPlayersnRank
                 .Take(_displaycnt)
                 .ToList();
 
-            if (topPlayers.Any())
-            {
-                TopPlayer = topPlayers.First().Item1;
-                TopPlayerRank = findRankLetter(TopPlayer.Rating);
-                LowerPlayers = topPlayers.Skip(1).Select((v) => (v.Item1, v.Item2, findRankLetter(v.Item1.Rating))).ToList();
-            }
+            if (!topPlayers.Any())
+                return;
+
+            TopPlayer = topPlayers.First().Item1;
+            TopPlayerRank = findRankLetter(TopPlayer.Rating);
 
             // Handle search functionality
             if (!string.IsNullOrEmpty(Name))
@@ -79,8 +81,11 @@ namespace PenFootball_Server.Pages
                         .Select(p => (p.Item1, p.Item2, findRankLetter(p.Item1.Rating)))
                         .ToList();
                     SearchedPlayer = player;
+                    return;
                 }
             }
+            //When search fails
+            LowerPlayers = topPlayers.Skip(1).Select((v) => (v.Item1, v.Item2, findRankLetter(v.Item1.Rating))).ToList();
         }
     }
 }
