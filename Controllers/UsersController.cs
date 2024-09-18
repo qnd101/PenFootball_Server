@@ -44,6 +44,7 @@ namespace PenFootball_Server.Controllers
         public string rankletter { get; set; }
         public string joindate { get; set; }
         public string email { get; set; }
+        public int id { get; set; }
     }
 
     public class SignupModel
@@ -232,7 +233,8 @@ namespace PenFootball_Server.Controllers
                         rating = userModel.Rating,
                         rankletter = findRankLetter(userModel.Rating),
                         joindate = userModel.JoinDate.ToShortDateString(),
-                        email = userModel.Email
+                        email = userModel.Email,
+                        id = userModel.ID
                     };
                     return Ok(userdatamodel);
                 }
