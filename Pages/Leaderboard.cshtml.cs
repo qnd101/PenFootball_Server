@@ -28,6 +28,9 @@ namespace PenFootball_Server.Pages
         [BindProperty(SupportsGet = true)]
         public string Name { get; set; }
 
+        [BindProperty(SupportsGet = true)]
+        public string Server { get; set; } = "SSHSPhys";
+
         public LeaderboardModel(UserDataContext context, IOptions<RatingSettings> ratingSettings, IOptions<ServerSettings> serversettings)
         {
             _context = context;
@@ -44,7 +47,7 @@ namespace PenFootball_Server.Pages
         }
         public async Task OnGetAsync()
         {
-            var settings = _serverSettings.Value.ServerAccounts["SSHSPhys"];
+            var settings = _serverSettings.Value.ServerAccounts[Server];
             StateEndPoint = settings.ApiEndpoint + "/gamedata/players/state";
 
             var orderedPlayersnRank = _context.Users

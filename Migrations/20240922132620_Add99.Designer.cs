@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PenFootball_Server.DB;
 
@@ -10,9 +11,11 @@ using PenFootball_Server.DB;
 namespace PenFootball_Server.Migrations
 {
     [DbContext(typeof(UserDataContext))]
-    partial class UserDataContextModelSnapshot : ModelSnapshot
+    [Migration("20240922132620_Add99")]
+    partial class Add99
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.8");
@@ -70,9 +73,6 @@ namespace PenFootball_Server.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("Role")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("SocialCredit")
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("Wins")

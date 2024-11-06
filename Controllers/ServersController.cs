@@ -13,7 +13,7 @@ using PenFootball_Server.Settings;
 
 namespace PenFootball_Server.Controllers
 {
-    public record GameResultData(int Player1ID, int Player2ID, int winner);
+    public record GameResultData(int Player1ID, int Player2ID, int winner, bool wasdeuce, int score1, int score2);
 
     [Route("api/[controller]")]
     [ApiController]
@@ -67,8 +67,55 @@ namespace PenFootball_Server.Controllers
                 user2.Rating -= delta;
 
                 _logger.LogInformation($"New Ratings... Player1: {user1.Rating}, Player2: {user2.Rating}");
+
+                if (result.winner == 1)
+                {
+                    user1.Wins += 1;
+                    user2.Loses += 1;
+                    if(result.wasdeuce)
+                    {
+                        user1.Wins99 += 1;
+                        user2.Loses99 += 1;
+                    }
+                }
+                else
+                {
+                    user1.Loses += 1;
+                    user2.Wins += 1;
+                    if(result.wasdeuce)
+                    {
+                        user1.Loses99 += 1;
+                        user2.Wins99 += 1;
+                    }
+                }
+                user1.SocialCredit += result.score1;
+                user2.SocialCredit += result.score2;
+
+                bool exchanged = result.Player1ID > result.Player2ID;
+                bool foundmodel= false;
+                RelStatModel relstat;
+                var exid1 = exchanged ? result.Player2ID : result.Player1ID;
+                var exid2 = exchanged ? result.Player1ID : result.Player2ID;
+                if (_userDataContext.RelStats.Find(exid1,exid2) is RelStatModel relstatfound)
+                {
+                    relstat = relstatfound;
+                    foundmodel = true;
+                }
+                else
+                    relstat = new RelStatModel() {ID1=exid1, ID2 = exid2 };
+
+                if (result.winner == 1 ^ exchanged)
+                    relstat.Win1 += 1;
+                else
+                    relstat.Win2 += 1;
+
+                relstat.Recent = ((relstat.Recent & 0x7FFFFFFF) << 1) + ((result.winner == 1 ^ exchanged) ? 1 : 0); //1이 이겼으면 1, 2가 이겼으면 0
+
+                if (!foundmodel)
+                    _userDataContext.RelStats.Add(relstat);
+                
                 _userDataContext.SaveChanges();
-               
+
                 return Ok();
             }
             else
@@ -77,7 +124,6 @@ namespace PenFootball_Server.Controllers
                 return BadRequest("Only Servers can Post Game Results!");
             }    
         }
-
 
         //게임 서버가 켜질때 JWT 토큰을 제공함 & 서버의 입장 Policy를 제공
         //서버 전용 API

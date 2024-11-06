@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PenFootball_Server.DB;
 
@@ -10,9 +11,11 @@ using PenFootball_Server.DB;
 namespace PenFootball_Server.Migrations
 {
     [DbContext(typeof(UserDataContext))]
-    partial class UserDataContextModelSnapshot : ModelSnapshot
+    [Migration("20240922125425_Statistics Added")]
+    partial class StatisticsAdded
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.8");
@@ -55,9 +58,6 @@ namespace PenFootball_Server.Migrations
                     b.Property<int>("Loses")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("Loses99")
-                        .HasColumnType("INTEGER");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -72,13 +72,7 @@ namespace PenFootball_Server.Migrations
                     b.Property<int>("Role")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("SocialCredit")
-                        .HasColumnType("INTEGER");
-
                     b.Property<int>("Wins")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("Wins99")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("ID");

@@ -10,6 +10,13 @@ using System.Text;
 using Microsoft.AspNetCore.HttpOverrides;
 using System.Runtime;
 using PenFootball_Server.Settings;
+using Microsoft.AspNetCore.Identity;
+
+/*
+var pw = "hellogoodbye";
+PasswordHasher<object> _passwordHasher = new PasswordHasher<object>();
+var hpw = _passwordHasher.HashPassword(null, pw);
+Console.WriteLine("Passord: " + pw + ", Hashed Password: " + hpw);*/
 
 var builder = WebApplication.CreateBuilder(args);
 

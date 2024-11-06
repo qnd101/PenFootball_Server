@@ -45,6 +45,7 @@ namespace PenFootball_Server.Controllers
         public string joindate { get; set; }
         public string email { get; set; }
         public int id { get; set; }
+        public int socialcredit { get; set; }
     }
 
     public class SignupModel
@@ -201,7 +202,8 @@ namespace PenFootball_Server.Controllers
                 new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                 new Claim(ClaimTypes.Role, Enum.GetName(user.Role.GetType(), user.Role) ?? ""),
-                new Claim("email", user.Email.ToString())
+                new Claim("email", user.Email.ToString()),
+                new Claim(JwtRegisteredClaimNames.Name, user.Name.ToString())
             };
 
             var token = new JwtSecurityToken(
@@ -234,7 +236,8 @@ namespace PenFootball_Server.Controllers
                         rankletter = findRankLetter(userModel.Rating),
                         joindate = userModel.JoinDate.ToShortDateString(),
                         email = userModel.Email,
-                        id = userModel.ID
+                        id = userModel.ID,
+                        socialcredit = userModel.SocialCredit,
                     };
                     return Ok(userdatamodel);
                 }
