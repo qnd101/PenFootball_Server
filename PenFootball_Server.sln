@@ -7,8 +7,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PenFootball_Server", "PenFo
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PenFootball_GameServer", "..\PenFootball_GameServer\PenFootball_GameServer.csproj", "{313840EF-3997-450B-9B11-477BB335D984}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PasswordHasher", "..\PasswordHasher\PasswordHasher.csproj", "{1CE8FBB6-24F1-4F57-8569-3AD8754EC79C}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -23,10 +21,6 @@ Global
 		{313840EF-3997-450B-9B11-477BB335D984}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{313840EF-3997-450B-9B11-477BB335D984}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{313840EF-3997-450B-9B11-477BB335D984}.Release|Any CPU.Build.0 = Release|Any CPU
-		{1CE8FBB6-24F1-4F57-8569-3AD8754EC79C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{1CE8FBB6-24F1-4F57-8569-3AD8754EC79C}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{1CE8FBB6-24F1-4F57-8569-3AD8754EC79C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{1CE8FBB6-24F1-4F57-8569-3AD8754EC79C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

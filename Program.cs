@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+ï»¿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Sqlite;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Cors.Infrastructure;
@@ -29,7 +29,7 @@ builder.Services.Configure<RatingSettings>(builder.Configuration.GetSection("Rat
 builder.Services.Configure<ServerSettings>(builder.Configuration.GetSection("GameServers"));
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 
-var tokenkeysettings = new TokenKeySettings(); //¼­¹ö ½ÃÀÛ ½Ã ¹«ÀÛÀ§ÀûÀ¸·Î Å° »ý¼º
+var tokenkeysettings = new TokenKeySettings(); //ì„œë²„ ì‹œìž‘ ì‹œ ë¬´ìž‘ìœ„ì ìœ¼ë¡œ í‚¤ ìƒì„±
 builder.Services.AddSingleton(tokenkeysettings);
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 builder.Services.AddCors(options =>
